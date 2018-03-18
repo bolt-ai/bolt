@@ -1,22 +1,33 @@
-from apiclient.discovery import build
+import requests
+import json
 import urllib
+import datetime
+import argparse
 
-service = build("customsearch", "v1",
-               developerKey="AIzaSyCCzersxy-m-v7G_ZaeKf4GjKAZnC9GpN8")
+parser = argparse.ArgumentParser()
+parser.add_argument('--apikey')
+parser.add_argument('--cx')
+parser.add_argument('--keyword')
 
-res = service.cse().list(
-    q='butterfly',
-    cx='000253225706237899251:rykc6k4woyc',
-    searchType='image',
-    num=3,
-    imgType='clipart',
-    fileType='png',
-    safe= 'off'
-).execute()
+args = parser.parse_args()
 
-if not 'items' in res:
-    print 'No result !!\nres is: {}'.format(res)
-else:
-    for item in res['items']:
-        print('{}:\n\t{}'.format(item['title'], item['link']))
-        urllib.urlretrieve(item, "00000001.jpg")
+searchTerm = args.keyword
+startIndex = '1'
+key = args.apikey
+cx = args.cx
+searchUrl = "https://www.googleapis.com/customsearch/v1?q=" + \
+    searchTerm + "&start=" + startIndex + "&key=" + key + "&cx=" + cx + \
+    "&searchType=image&count=1"
+r = requests.get(searchUrl)
+response = r.content.decode('utf-8')
+result = json.loads(response)
+g=result['items'].pop()
+if g['mime'] == 'image/jpeg':
+	ext='.jpg'
+elif g['mime'] == 'image/png':
+	ext='.png'
+	
+noww=datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+urllib.request.urlretrieve(g['link'], 'random/'+noww+'_'+searchTerm+ext)
+
+print('downloaded 1 image of a '+searchTerm+'.')
